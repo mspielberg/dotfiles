@@ -1,0 +1,21 @@
+#!/bin/sh
+lineno="$1"
+cursorline="$2"
+cursorcol=$(expr $3 - 1)
+
+vim - 63<&0 0</dev/null \
+  -c 'set laststatus=0 ruler' \
+  -c 'echom "lineno='$lineno' line='$cursorline' col='$cursorcol'"' \
+  -c 'noremap <silent> q :qa!<CR>' \
+  -c 'exec "function! KittyPagerPoll(timer_id) \n if line(\"$\") > 1 \n eval timer_stop(a:timer_id) \n execute(\"normal \<c-w>o'$lineno'z+'$cursorline'j'$cursorcol'l\") \n endif \n endfunction"' \
+  -c 'augroup kittypager' \
+  -c '  autocmd!' \
+  -c '  autocmd TextYankPost * if v:event.regname == "" | call osc52#SendLines(v:event.regcontents) | endif' \
+  -c '  autocmd TerminalOpen * eval timer_start(10, function("KittyPagerPoll"), {"repeat": -1})' \
+  -c 'augroup END' \
+  -c 'terminal ++open cat /dev/fd/63'
+#  -c '$d' \
+#  -c 'w! '$dir/kittypager \
+#  -c 'terminal ++open ++curwin ++shell cat '$dir/kittypager' ; rm -r '$dir \
+#  -c '  autocmd TerminalOpen * echom "got TerminalOpen: '$lineno'" | exec "normal \<c-w>o'$lineno'G"' \
+#  -c '  autocmd TerminalOpen * echom "got TerminalOpen: numlines=" line("$") | exec "normal \<c-w>o'$lineno'z+'$cursorline'j'$cursorcol'l"' \
