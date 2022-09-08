@@ -1,16 +1,16 @@
 #!/bin/sh
 lineno=$1
-cursorline=$(expr $2 - 1)
-cursorcol=$(expr $3 - 1)
+cursorline=`expr $2 - 1`
+cursorcol=`expr $3 - 1`
 
-rc=$(
+rc=`
 cat <<-END
 	set laststatus=0 ruler
 	noremap <silent> q :qa!<CR>
 
 	function! KittyPagerPoll(timer_id)
-	  if line("\$") > ${lineno}
-	    eval timer_stop(a:timer_id)
+	  if line("\$") >= ${lineno} + ${cursorline}
+	    call timer_stop(a:timer_id)
 	    normal ${lineno}z+${cursorline}j0${cursorcol}l
 	  endif
 	endfunction
@@ -18,10 +18,11 @@ cat <<-END
 	augroup kittypager
 	  autocmd!
 	  autocmd TextYankPost * if v:event.regname == "" | call osc52#SendLines(v:event.regcontents) | endif
-	  autocmd TerminalOpen * eval timer_start(10, function("KittyPagerPoll"), {"repeat": -1})
+	  autocmd TerminalOpen * call timer_start(10, function("KittyPagerPoll"), {"repeat": -1})
 	augroup END
 
 	terminal ++curwin cat /dev/fd/6
 END
-)
-sed -e '$d' | ( echo "$rc" | vim - -S /dev/fd/5 5<&0 0</dev/null ) 6<&0
+`
+
+exec sed -e '$d' | ( echo "$rc" | vim - -S /dev/fd/5 5<&0 0</dev/null ) 6<&0
